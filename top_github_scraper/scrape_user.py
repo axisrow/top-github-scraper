@@ -1,14 +1,9 @@
 import json
 import os
 from pathlib import Path
-from dotenv import load_dotenv
 from rich import print
+from top_github_scraper.auth import USERNAME, TOKEN
 from top_github_scraper.utils import ScrapeGithubUrl, UserProfileGetter
-
-load_dotenv()
-
-USERNAME = os.getenv("GITHUB_USERNAME")
-TOKEN = os.getenv("GITHUB_TOKEN")
 
 def get_top_user_urls(
     keyword: str,

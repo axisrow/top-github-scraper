@@ -5,17 +5,12 @@ from typing import List
 
 import pandas as pd
 import requests
-from dotenv import load_dotenv
 from rich import print
 from rich.progress import track
 from tqdm import tqdm
+from top_github_scraper.auth import USERNAME, TOKEN
 from top_github_scraper.utils import ScrapeGithubUrl, UserProfileGetter, isnotebook
 import logging
-
-load_dotenv()
-
-USERNAME = os.getenv("GITHUB_USERNAME")
-TOKEN = os.getenv("GITHUB_TOKEN")
 
 class RepoScraper:
     """Scrape information of repos and the

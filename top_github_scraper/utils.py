@@ -4,29 +4,17 @@ import requests
 from rich.progress import track
 from rich import print 
 import pandas as pd 
-import os
 import warnings
-from dotenv import load_dotenv
 from typing import List
 from IPython import get_ipython
 from tqdm import tqdm
 import logging
 
+from top_github_scraper.auth import USERNAME, TOKEN
 
-load_dotenv()
 warnings.filterwarnings("ignore")
 
-# Currently dead code. To be added later as an enhancement.
-# TYPES = ['Users', 'Repositories', 'Code', 'Commits', 'Issues', 'Packages', 'Topics']
-# SORT_BY = {'Users': ['followers'],'Repositories': ['', 'stars']}
 SCRAPE_CLASS = {'Users': 'mr-1', 'Repositories': "v-align-middle"}
-
-USERNAME = os.getenv("GITHUB_USERNAME")
-TOKEN = os.getenv("GITHUB_TOKEN")
-
-if USERNAME is None or TOKEN is None:
-    logging.warning("""You are using a Github API as an unauthenticated user. For unauthenticated requests, you are limited to 60 requests per hour.
-     Follow the instruction here to authenticate yourself and increase your API request limit: https://github.com/khuyentran1401/top-github-scraper#setup""")
 class ScrapeGithubUrl:
     """Scrape top Github urls based on a certain keyword and type
 
