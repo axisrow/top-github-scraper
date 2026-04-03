@@ -27,6 +27,15 @@ GITHUB_TOKEN=yourtoken
 ## Usage
 View full documentation [here](https://khuyentran1401.github.io/top-github-scraper/html/top_github_scraper/index.html).
 
+## Documentation
+Regenerate the versioned HTML docs with:
+
+```bash
+python3 scripts/build_docs.py
+```
+
+This build keeps the published docs at `html/top_github_scraper/`, uses `docs/pdoc_templates/` for `pdoc` customization, and writes shared styling to `html/assets/pdoc.css`.
+
 ### Get Top Github Repositories' URLs
 ```python
 from top_github_scraper import get_top_repo_urls
@@ -167,4 +176,3 @@ For each user, `top-github-scraper` scrapes 16 data points:
 * `public_gists`: Number of public repositories the user has (including forked gists)
 * `followers`: Number of followers the user has
 * `following`: Number of people the user is following
-
