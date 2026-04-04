@@ -19,5 +19,5 @@ def test_scrape_top_repo_url_multiple_pages():
 def test_get_all_contributor_profiles():
     urls = ["https://api.github.com/users/jakevdp",
             "https://api.github.com/users/fuglede"]
-    res = UserProfileGetter(urls).get_all_contributor_profiles()
+    res = UserProfileGetter(urls).get_all_user_profiles()
     assert isinstance(res, pd.DataFrame)
