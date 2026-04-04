@@ -4,7 +4,10 @@ from pathlib import Path
 
 from rich import print
 
-from top_github_scraper.utils import ScrapeGithubUrl, UserProfileGetter
+from top_github_scraper.utils import (
+    SearchGithubUsers,
+    UserProfileGetter,
+)
 
 
 def get_top_user_urls(
@@ -21,9 +24,9 @@ def get_top_user_urls(
     safe_keyword = keyword.replace(" ", "_")
     Path(save_directory).mkdir(parents=True, exist_ok=True)
     save_path = f"{save_directory}/top_user_urls_{safe_keyword}_{start_page}_{stop_page}.json"
-    repo_urls = ScrapeGithubUrl(
-        keyword, "Users", "followers", start_page, stop_page
-    ).scrape_top_repo_url_multiple_pages()
+    repo_urls = SearchGithubUsers(
+        keyword, "followers", start_page, stop_page
+    ).search_multiple_pages()
     with open(save_path, "w") as outfile:
         json.dump(repo_urls, outfile)
     return repo_urls

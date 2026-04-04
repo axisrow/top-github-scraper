@@ -142,6 +142,68 @@ class ScrapeGithubUrl:
         return urls
 
 
+class SearchGithubUsers:
+    """Search top GitHub users by keyword using the GitHub Search API.
+
+    Parameters
+    ----------
+    keyword: str
+        keyword to search on GitHub
+    sort_by: str
+        sort by 'followers', 'repositories', 'joined', or 'best_match'
+    start_page_num: int
+        page number to start (1-indexed)
+    stop_page_num: int
+        page number to stop (exclusive)
+    """
+
+    _BASE_URL = "https://api.github.com/search/users"
+
+    def __init__(
+        self,
+        keyword: str,
+        sort_by: str,
+        start_page_num: int,
+        stop_page_num: int,
+    ):
+        self.keyword = keyword
+        self.sort_by = sort_by if sort_by != "best_match" else ""
+        self.start_page_num = start_page_num
+        self.stop_page_num = stop_page_num
+
+    def _search_one_page(self, page_num: int) -> List[str]:
+        keyword_encoded = "+".join(self.keyword.split())
+        sort_param = f"&sort={self.sort_by}" if self.sort_by else ""
+        url = (
+            f"{self._BASE_URL}?q={keyword_encoded}"
+            f"&order=desc{sort_param}&per_page=100&page={page_num}"
+        )
+        response = requests.get(url, auth=get_auth())
+        if response.status_code != 200:
+            logging.warning(
+                f"GitHub Search API returned {response.status_code} "
+                f"for page {page_num}"
+            )
+            return []
+        return [
+            f"/{item['login']}"
+            for item in response.json().get("items", [])
+        ]
+
+    def search_multiple_pages(self) -> List[str]:
+        urls: List[str] = []
+        pages = range(self.start_page_num, self.stop_page_num)
+        if isnotebook():
+            for page_num in tqdm(pages, desc="Searching GitHub users..."):
+                urls.extend(self._search_one_page(page_num))
+        else:
+            for page_num in track(
+                pages, description="Searching GitHub users..."
+            ):
+                urls.extend(self._search_one_page(page_num))
+        return urls
+
+
 class UserProfileGetter:
     """Get the information from users' homepage"""
 
