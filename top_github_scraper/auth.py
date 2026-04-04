@@ -42,7 +42,7 @@ def get_github_auth():
         except FileNotFoundError:
             pass
 
-    if not username or not token:
+    if not token:
         logging.warning(
             "You are using the GitHub API as an unauthenticated user. "
             "Limited to 60 requests/hour. Set GITHUB_USERNAME/GITHUB_TOKEN "
@@ -55,4 +55,6 @@ def get_github_auth():
 def get_auth():
     """Returns auth tuple for requests, or None if unauthenticated."""
     username, token = get_github_auth()
-    return (username, token) if username and token else None
+    if token:
+        return (username or token, token)
+    return None
