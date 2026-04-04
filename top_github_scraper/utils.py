@@ -110,6 +110,7 @@ class ScrapeGithubUrl:
             print(
                 f"Bad HTTP Response from: {url}. Got an HTTP response of: {page.status_code}.\n Please confirm this URL is valid."
             )
+            return []
 
         soup = BeautifulSoup(page.text, "html.parser")
         a_tags = soup.find_all("a", href=True)
