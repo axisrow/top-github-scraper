@@ -1,38 +1,61 @@
-from dataclasses import dataclass
-from bs4 import BeautifulSoup
-import requests
-from rich.progress import track
-from rich import print 
-import pandas as pd 
-import warnings
-from typing import List
-from IPython import get_ipython
-from tqdm import tqdm
 import logging
+import warnings
+from dataclasses import dataclass
+from typing import List
 
-from top_github_scraper.auth import USERNAME, TOKEN
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+from IPython import get_ipython
+from rich import print
+from rich.progress import track
+from tqdm import tqdm
+
+from top_github_scraper.auth import TOKEN, USERNAME
 
 warnings.filterwarnings("ignore")
 
 SKIP_PATHS = {
-    '/search', '/topics', '/settings', '/pricing', '/features',
-    '/enterprise', '/sponsors', '/explore', '/trending', '/marketplace',
-    '/notifications', '/new', '/orgs', '/login', '/signup', '/join',
-    '/security', '/about',
+    "/search",
+    "/topics",
+    "/settings",
+    "/pricing",
+    "/features",
+    "/enterprise",
+    "/sponsors",
+    "/explore",
+    "/trending",
+    "/marketplace",
+    "/notifications",
+    "/new",
+    "/orgs",
+    "/login",
+    "/signup",
+    "/join",
+    "/security",
+    "/about",
 }
 
 
 def _is_repo_link(href):
-    return (href.startswith('/') and not href.startswith('//')
-            and href.count('/') == 2
-            and not any(href.startswith(s) for s in SKIP_PATHS))
+    return (
+        href.startswith("/")
+        and not href.startswith("//")
+        and href.count("/") == 2
+        and not any(href.startswith(s) for s in SKIP_PATHS)
+    )
 
 
 def _is_user_link(href):
-    return (href.startswith('/') and not href.startswith('//')
-            and href.count('/') == 1
-            and len(href) > 1
-            and not any(href.startswith(s) for s in SKIP_PATHS))
+    return (
+        href.startswith("/")
+        and not href.startswith("//")
+        and href.count("/") == 1
+        and len(href) > 1
+        and not any(href.startswith(s) for s in SKIP_PATHS)
+    )
+
+
 class ScrapeGithubUrl:
     """Scrape top Github urls based on a certain keyword and type
 
@@ -42,8 +65,8 @@ class ScrapeGithubUrl:
         keyword to search on Github
     type: str
         whether to search for User or Repositories
-    sort_by: str 
-        sort by best match or most stars, by default 'best_match', which will sort by best match. 
+    sort_by: str
+        sort by best match or most stars, by default 'best_match', which will sort by best match.
         Use 'stars' to sort by most stars.
     start_page_num: int
         page number to start scraping. The default is 0
@@ -55,13 +78,20 @@ class ScrapeGithubUrl:
     List[str]
     """
 
-    def __init__(self,keyword: str, type: str, sort_by: str, start_page_num: int, stop_page_num: int):
+    def __init__(
+        self,
+        keyword: str,
+        type: str,
+        sort_by: str,
+        start_page_num: int,
+        stop_page_num: int,
+    ):
         self.keyword = keyword
         self.type = type
         self.start_page_num = start_page_num
         self.stop_page_num = stop_page_num
-        if sort_by =='best_match':
-            self.sort_by = ''
+        if sort_by == "best_match":
+            self.sort_by = ""
         else:
             self.sort_by = sort_by
 
@@ -73,22 +103,26 @@ class ScrapeGithubUrl:
 
     def _scrape_top_repo_url_one_page(self, page_num: int):
         """Scrape urls of top Github repositories in 1 page"""
-        url = self._keyword_to_url(page_num, self.keyword, type=self.type, sort_by=self.sort_by)
+        url = self._keyword_to_url(
+            page_num, self.keyword, type=self.type, sort_by=self.sort_by
+        )
         page = requests.get(url, auth=(USERNAME, TOKEN))
         if page.status_code != 200:
-            print(f"Bad HTTP Response from: {url}. Got an HTTP repsonse of: {page.status_code}.\n Please confirm this URL is valid.")
+            print(
+                f"Bad HTTP Response from: {url}. Got an HTTP repsonse of: {page.status_code}.\n Please confirm this URL is valid."
+            )
 
         soup = BeautifulSoup(page.text, "html.parser")
         a_tags = soup.find_all("a", href=True)
 
-        if self.type == 'Repositories':
+        if self.type == "Repositories":
             urls = [a.get("href") for a in a_tags if _is_repo_link(a["href"])]
-        elif self.type == 'Users':
+        elif self.type == "Users":
             urls = [a.get("href") for a in a_tags if _is_user_link(a["href"])]
         else:
             urls = []
 
-        return urls
+        return list(dict.fromkeys(urls))
 
     def scrape_top_repo_url_multiple_pages(self):
         """Scrape urls of top Github repositories in multiple pages"""
@@ -99,13 +133,14 @@ class ScrapeGithubUrl:
                 desc="Scraping top GitHub URLs...",
             ):
                 urls.extend(self._scrape_top_repo_url_one_page(page_num))
-        else: 
+        else:
             for page_num in track(
                 range(self.start_page_num, self.stop_page_num),
                 description="Scraping top GitHub URLs...",
             ):
                 urls.extend(self._scrape_top_repo_url_one_page(page_num))
         return urls
+
 
 class UserProfileGetter:
     """Get the information from users' homepage"""
@@ -142,11 +177,11 @@ class UserProfileGetter:
 
         if isnotebook():
             all_contributors = [
-            self._get_one_user_profile(url)
-            for url in tqdm(
-                self.urls, desc="Scraping top GitHub profiles..."
-            )
-        ]
+                self._get_one_user_profile(url)
+                for url in tqdm(
+                    self.urls, desc="Scraping top GitHub profiles..."
+                )
+            ]
         else:
             all_contributors = [
                 self._get_one_user_profile(url)
@@ -164,11 +199,11 @@ class UserProfileGetter:
 def isnotebook():
     try:
         shell = get_ipython().__class__.__name__
-        if shell == 'ZMQInteractiveShell':
-            return True   # Jupyter notebook or qtconsole
-        elif shell == 'TerminalInteractiveShell':
+        if shell == "ZMQInteractiveShell":
+            return True  # Jupyter notebook or qtconsole
+        elif shell == "TerminalInteractiveShell":
             return False  # Terminal running IPython
         else:
             return False  # Other type (?)
     except NameError:
-        return False      # Probably standard Python interpreter
+        return False  # Probably standard Python interpreter
