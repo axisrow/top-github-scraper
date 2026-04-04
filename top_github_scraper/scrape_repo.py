@@ -74,30 +74,43 @@ class RepoScraper:
         return repo_important_info
 
     def _get_contributor_repo_of_one_repo(self, repo_url: str):
-
-        # https://api.github.com/repos/josephmisiti/awesome-machine-learning/contributors
-        contributor_url = (
+        base_url = (
             f"https://api.github.com/repos{repo_url}/contributors"
         )
-        http_response = requests.get(contributor_url, auth=get_auth())
-        # Return an empty dictionary if we encouter an error for a particular URL.
-        # This will allow us to keep parsing the rest of the URLs we need to parse without erroring out.
-        if http_response.status_code != 200:
-            return {}
-        contributor_page = http_response.json()
-
         contributors_info = {"login": [], "url": [], "contributions": []}
+        collected = 0
+        page = 1
+        stopped_due_to_error = False
 
-        max_n_top_contributors = self._find_max_n_top_contributors(
-            num_contributors=len(contributor_page)
-        )
-        n_top_contributor = 0
+        while collected < self.max_n_top_contributors:
+            url = f"{base_url}?per_page=100&page={page}"
+            http_response = requests.get(url, auth=get_auth())
+            if http_response.status_code != 200:
+                logging.warning(
+                    f"Non-200 response ({http_response.status_code}) "
+                    f"fetching contributors for {repo_url}, page {page}"
+                )
+                stopped_due_to_error = True
+                break
+            contributor_page = http_response.json()
+            if not contributor_page:
+                break
 
-        while n_top_contributor < max_n_top_contributors:
-            contributor = contributor_page[n_top_contributor]
+            for contributor in contributor_page:
+                if collected >= self.max_n_top_contributors:
+                    break
+                self._get_contributor_general_info(
+                    contributors_info, contributor
+                )
+                collected += 1
 
-            self._get_contributor_general_info(contributors_info, contributor)
-            n_top_contributor += 1
+            page += 1
+
+        if stopped_due_to_error and collected < self.max_n_top_contributors:
+            logging.warning(
+                f"Collected only {collected}/{self.max_n_top_contributors} "
+                f"contributors for {repo_url} — pagination stopped early"
+            )
 
         return contributors_info
 
@@ -110,11 +123,6 @@ class RepoScraper:
         contributors_info["url"].append(contributor["url"])
         contributors_info["contributions"].append(contributor["contributions"])
 
-    def _find_max_n_top_contributors(self, num_contributors: int):
-        if num_contributors > self.max_n_top_contributors:
-            return self.max_n_top_contributors
-        else:
-            return num_contributors
 
 
 class DataProcessor:
@@ -175,12 +183,11 @@ def get_top_repo_urls(
         with open(full_path, "w") as outfile:
             json.dump(repo_urls, outfile)
         return repo_urls
-    except Exception as e:
-        print(e)
+    except requests.RequestException as e:
         logging.error(
-            """You might be hitting the rate limit of the GitHub API. Have you authenticated your user account?
-                      If you have exceeded the rate limit as an authenticated user, either decrease the number of pages to scrape or to wait until more requests are available."""
+            f"Network error while fetching repo URLs: {e}"
         )
+        raise
 
 
 def get_top_repos(
@@ -219,12 +226,9 @@ def get_top_repos(
             json.dump(top_repos, outfile)
         return top_repos
 
-    except Exception as e:
-        print(e)
-        logging.error(
-            """You might be hitting the rate limit of the GitHub API. Have you authenticated your user account?
-                      If you have exceeded the rate limit as an authenticated user, either decrease the number of pages to scrape or to wait until more requests are available."""
-        )
+    except (requests.RequestException, FileNotFoundError) as e:
+        logging.error(f"Failed to fetch top repos: {e}")
+        raise
 
 
 def get_top_contributors(
