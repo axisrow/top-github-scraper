@@ -99,12 +99,9 @@ class RepoScraper:
             if not contributor_page:
                 break
 
-            n_from_page = self._find_max_n_top_contributors(
-                len(contributor_page)
-            )
+            remaining = self.max_n_top_contributors - collected
+            n_from_page = min(remaining, len(contributor_page))
             for contributor in contributor_page[:n_from_page]:
-                if collected >= self.max_n_top_contributors:
-                    break
                 self._get_contributor_general_info(
                     contributors_info, contributor
                 )
