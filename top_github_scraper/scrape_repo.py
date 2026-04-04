@@ -52,6 +52,15 @@ class RepoScraper:
             logging.error(
                 f"You are getting a bad HTTP response when you are requesting info from this URL: {repo_info_url}"
             )
+            return {
+                "stargazers_count": 0,
+                "forks_count": 0,
+                "contributors": {
+                    "login": [],
+                    "url": [],
+                    "contributions": [],
+                },
+            }
         repo_info = http_response.json()
         info_to_scrape = ["stargazers_count", "forks_count"]
         repo_important_info = {}
