@@ -2,6 +2,7 @@
 __pycache__
 TODO.md
 .env
+.venv/
 *.json
 *.csv
 publish.sh

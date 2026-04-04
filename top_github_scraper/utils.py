@@ -15,7 +15,45 @@ from top_github_scraper.auth import get_auth
 
 warnings.filterwarnings("ignore")
 
-SCRAPE_CLASS = {"Users": "mr-1", "Repositories": "v-align-middle"}
+SKIP_PATHS = {
+    "/search",
+    "/topics",
+    "/settings",
+    "/pricing",
+    "/features",
+    "/enterprise",
+    "/sponsors",
+    "/explore",
+    "/trending",
+    "/marketplace",
+    "/notifications",
+    "/new",
+    "/orgs",
+    "/login",
+    "/signup",
+    "/join",
+    "/security",
+    "/about",
+}
+
+
+def _is_repo_link(href):
+    return (
+        href.startswith("/")
+        and not href.startswith("//")
+        and href.count("/") == 2
+        and not any(href.startswith(s) for s in SKIP_PATHS)
+    )
+
+
+def _is_user_link(href):
+    return (
+        href.startswith("/")
+        and not href.startswith("//")
+        and href.count("/") == 1
+        and len(href) > 1
+        and not any(href.startswith(s) for s in SKIP_PATHS)
+    )
 
 
 class ScrapeGithubUrl:
@@ -75,10 +113,16 @@ class ScrapeGithubUrl:
             )
 
         soup = BeautifulSoup(page.text, "html.parser")
-        a_tags = soup.find_all("a", class_=SCRAPE_CLASS[self.type])
-        urls = [a_tag.get("href") for a_tag in a_tags]
+        a_tags = soup.find_all("a", href=True)
 
-        return urls
+        if self.type == "Repositories":
+            urls = [a.get("href") for a in a_tags if _is_repo_link(a["href"])]
+        elif self.type == "Users":
+            urls = [a.get("href") for a in a_tags if _is_user_link(a["href"])]
+        else:
+            urls = []
+
+        return list(dict.fromkeys(urls))
 
     def scrape_top_repo_url_multiple_pages(self):
         """Scrape urls of top Github repositories in multiple pages"""
