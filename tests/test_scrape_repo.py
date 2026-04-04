@@ -18,7 +18,7 @@ CASSETTES_DIR = os.path.join(os.path.dirname(__file__), "cassettes")
 
 
 class TestGetContributorGeneralInfo:
-    def test_appends_contributor_info(self):
+    def test_appends_one_contributor(self):
         contributors_info = {
             "login": [],
             "url": [],
@@ -32,7 +32,6 @@ class TestGetContributorGeneralInfo:
         RepoScraper._get_contributor_general_info(
             contributors_info, contributor
         )
-
         assert contributors_info["login"] == ["user1"]
         assert contributors_info["url"] == [
             "https://api.github.com/users/user1"
@@ -46,15 +45,14 @@ class TestGetContributorGeneralInfo:
             "contributions": [],
         }
         for i in range(3):
-            contributor = {
-                "login": f"user{i}",
-                "url": f"https://api.github.com/users/user{i}",
-                "contributions": i * 10,
-            }
             RepoScraper._get_contributor_general_info(
-                contributors_info, contributor
+                contributors_info,
+                {
+                    "login": f"user{i}",
+                    "url": f"https://api.github.com/users/user{i}",
+                    "contributions": i * 10,
+                },
             )
-
         assert len(contributors_info["login"]) == 3
 
 
@@ -87,7 +85,7 @@ class TestDataProcessor:
         processor = DataProcessor(sample_repo_info)
         result = processor.process()
         assert isinstance(result, pd.DataFrame)
-        assert len(result) == 2  # 2 contributors in sample data
+        assert len(result) == 2
 
 
 class TestRepoScraperErrorHandling:
@@ -124,7 +122,6 @@ class TestRepoScraperErrorHandling:
             }
 
     def test_get_contributors_empty_page(self):
-        """When API returns empty list, pagination stops."""
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = []
@@ -140,10 +137,10 @@ class TestRepoScraperErrorHandling:
             assert result["login"] == []
 
 
-# --- Integration tests (VCR) ---
+# --- Unit tests with VCR cassettes (recorded responses, no network) ---
 
 
-class TestRepoScraperIntegration:
+class TestRepoScraperVcr:
     @vcr.use_cassette(
         os.path.join(CASSETTES_DIR, "repo_info.yaml")
     )
@@ -176,7 +173,7 @@ class TestRepoScraperIntegration:
         assert len(result["login"]) <= 3
 
 
-class TestPublicFunctionsIntegration:
+class TestPublicFunctionsVcr:
     @vcr.use_cassette(
         os.path.join(CASSETTES_DIR, "top_repo_urls.yaml")
     )
@@ -220,3 +217,34 @@ class TestPublicFunctionsIntegration:
         )
         assert isinstance(result, pd.DataFrame)
         assert "login" in result.columns
+
+
+# --- Integration tests (real GitHub API) ---
+
+
+@pytest.mark.integration
+class TestRepoScraperIntegration:
+    def test_get_real_repo_information(self):
+        scraper = RepoScraper(
+            ["/josephmisiti/awesome-machine-learning"],
+            max_n_top_contributors=2,
+        )
+        result = scraper._get_repo_information(
+            "/josephmisiti/awesome-machine-learning"
+        )
+        assert result["stargazers_count"] > 0
+        assert "contributors" in result
+        assert len(result["contributors"]["login"]) > 0
+
+
+@pytest.mark.integration
+class TestPublicFunctionsIntegration:
+    def test_get_top_repo_urls_from_real_api(self, tmp_path):
+        result = get_top_repo_urls(
+            keyword="machine learning",
+            start_page=1,
+            stop_page=2,
+            save_directory=str(tmp_path),
+        )
+        assert isinstance(result, list)
+        assert len(result) > 0

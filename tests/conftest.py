@@ -5,9 +5,25 @@ import pytest
 import vcr
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--record-vcr",
+        action="store_true",
+        help="Record new VCR cassettes instead of using recorded ones",
+    )
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", "integration: hit real GitHub API (deselected by default)"
+    )
+
+
 @pytest.fixture(autouse=True)
-def mock_env_vars(monkeypatch):
-    """Set fake credentials if real ones are not configured."""
+def mock_env_vars(monkeypatch, request):
+    """Set fake credentials for unit tests."""
+    if "integration" in request.keywords:
+        return
     if not os.getenv("GITHUB_USERNAME"):
         monkeypatch.setenv("GITHUB_USERNAME", "test_user")
     if not os.getenv("GITHUB_TOKEN"):
@@ -16,18 +32,27 @@ def mock_env_vars(monkeypatch):
 
 CASSETTES_DIR = os.path.join(os.path.dirname(__file__), "cassettes")
 
-RECORD_MODE = os.getenv("VCR_RECORD_MODE", "none")
+
+@pytest.fixture
+def cassettes_dir():
+    return CASSETTES_DIR
 
 
 @pytest.fixture
-def vcr_instance():
-    """Returns a configured VCR instance."""
+def vcr_cassette_dir(request, record_vcr):
+    """Return cassette path; record mode if --record-vcr flag used."""
+    record_mode = "new_episodes" if record_vcr else "none"
     return vcr.VCR(
         cassette_library_dir=CASSETTES_DIR,
-        record_mode=RECORD_MODE,
+        record_mode=record_mode,
         match_on=["uri", "method"],
         filter_headers=["authorization"],
     )
+
+
+@pytest.fixture
+def record_vcr(request):
+    return request.config.getoption("--record-vcr", default=False)
 
 
 @pytest.fixture
