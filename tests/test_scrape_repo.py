@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
-import vcr
 
+from tests.conftest import vcr
 from top_github_scraper.scrape_repo import (
     DataProcessor,
     RepoScraper,
