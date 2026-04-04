@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
-<title>top_github_scraper.scrape_user API documentation</title>
+<title>top_github_scraper.auth API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
@@ -19,73 +19,73 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>top_github_scraper.scrape_user</code></h1>
+<h1 class="title">Module <code>top_github_scraper.auth</code></h1>
 </header>
 <section id="section-intro">
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import json
+<pre><code class="python">import logging
 import os
-from pathlib import Path
+import subprocess
+from functools import lru_cache
 
-from rich import print
+from dotenv import load_dotenv
 
-from top_github_scraper.utils import ScrapeGithubUrl, UserProfileGetter
-
-
-def get_top_user_urls(
-    keyword: str,
-    save_directory: str = &#34;.&#34;,
-    start_page: int = 1,
-    stop_page: int = 50,
-):
-    &#34;&#34;&#34;Get the URLs of the repositories pop up when searching for a specific
-    keyword on GitHub.
-
-    See PARAMETERs.md for a description of the parameters of this function
-    &#34;&#34;&#34;
-    safe_keyword = keyword.replace(&#34; &#34;, &#34;_&#34;)
-    Path(save_directory).mkdir(parents=True, exist_ok=True)
-    save_path = f&#34;{save_directory}/top_user_urls_{safe_keyword}_{start_page}_{stop_page}.json&#34;
-    repo_urls = ScrapeGithubUrl(
-        keyword, &#34;Users&#34;, &#34;followers&#34;, start_page, stop_page
-    ).scrape_top_repo_url_multiple_pages()
-    with open(save_path, &#34;w&#34;) as outfile:
-        json.dump(repo_urls, outfile)
-    return repo_urls
+load_dotenv()
 
 
-def get_top_users(
-    keyword: str,
-    start_page: int = 1,
-    stop_page: int = 50,
-    save_directory: str = &#34;.&#34;,
-):
-    &#34;&#34;&#34;
-    Get the information of the owners and contributors of the repositories pop up when searching for a specific
-    keyword on GitHub.
+@lru_cache(maxsize=1)
+def get_github_auth():
+    &#34;&#34;&#34;Returns (username, token) or (None, None). Cached after first call.&#34;&#34;&#34;
+    username = os.getenv(&#34;GITHUB_USERNAME&#34;)
+    token = os.getenv(&#34;GITHUB_TOKEN&#34;)
 
-    See PARAMETERs.md for a description of the parameters of this function.
-    &#34;&#34;&#34;
-    safe_keyword = keyword.replace(&#34; &#34;, &#34;_&#34;)
-    full_url_save_path = f&#34;{save_directory}/top_user_urls_{safe_keyword}_{start_page}_{stop_page}.json&#34;
-    user_save_path = f&#34;{save_directory}/top_user_info_{safe_keyword}_{start_page}_{stop_page}.csv&#34;
-    if not Path(full_url_save_path).exists():
-        get_top_user_urls(
-            keyword=keyword,
-            start_page=start_page,
-            stop_page=stop_page,
-            save_directory=save_directory,
+    # Fallback: get token from gh CLI
+    if not token:
+        try:
+            result = subprocess.run(
+                [&#34;gh&#34;, &#34;auth&#34;, &#34;token&#34;],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0:
+                token = result.stdout.strip()
+        except (FileNotFoundError, subprocess.SubprocessError):
+            pass
+
+    # Fallback: get username from gh CLI
+    if not username and token:
+        try:
+            result = subprocess.run(
+                [&#34;gh&#34;, &#34;api&#34;, &#34;user&#34;, &#34;-q&#34;, &#34;.login&#34;],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0:
+                username = result.stdout.strip()
+        except (FileNotFoundError, subprocess.SubprocessError):
+            pass
+
+    if not token:
+        logging.warning(
+            &#34;You are using the GitHub API as an unauthenticated user. &#34;
+            &#34;Limited to 60 requests/hour. Set GITHUB_USERNAME/GITHUB_TOKEN &#34;
+            &#34;in .env or run `gh auth login`.&#34;
         )
-    with open(full_url_save_path, &#34;r&#34;) as infile:
-        user_urls = json.load(infile)
-        url = &#34;https://api.github.com/users&#34;
-        urls = [url + user for user in user_urls]
-        top_users = UserProfileGetter(urls).get_all_user_profiles()
-        top_users.to_csv(user_save_path)
-        return top_users</code></pre>
+
+    return username, token
+
+
+def get_auth():
+    &#34;&#34;&#34;Returns auth tuple for requests, or None if unauthenticated.&#34;&#34;&#34;
+    username, token = get_github_auth()
+    if token:
+        return (username or token, token)
+    return None</code></pre>
 </details>
 </section>
 <section>
@@ -95,79 +95,74 @@ def get_top_users(
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="top_github_scraper.scrape_user.get_top_user_urls"><code class="name flex">
-<span>def <span class="ident">get_top_user_urls</span></span>(<span>keyword: str, save_directory: str = '.', start_page: int = 1, stop_page: int = 50)</span>
+<dt id="top_github_scraper.auth.get_auth"><code class="name flex">
+<span>def <span class="ident">get_auth</span></span>(<span>)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Get the URLs of the repositories pop up when searching for a specific
-keyword on GitHub.</p>
-<p>See PARAMETERs.md for a description of the parameters of this function</p></div>
+<div class="desc"><p>Returns auth tuple for requests, or None if unauthenticated.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_top_user_urls(
-    keyword: str,
-    save_directory: str = &#34;.&#34;,
-    start_page: int = 1,
-    stop_page: int = 50,
-):
-    &#34;&#34;&#34;Get the URLs of the repositories pop up when searching for a specific
-    keyword on GitHub.
-
-    See PARAMETERs.md for a description of the parameters of this function
-    &#34;&#34;&#34;
-    safe_keyword = keyword.replace(&#34; &#34;, &#34;_&#34;)
-    Path(save_directory).mkdir(parents=True, exist_ok=True)
-    save_path = f&#34;{save_directory}/top_user_urls_{safe_keyword}_{start_page}_{stop_page}.json&#34;
-    repo_urls = ScrapeGithubUrl(
-        keyword, &#34;Users&#34;, &#34;followers&#34;, start_page, stop_page
-    ).scrape_top_repo_url_multiple_pages()
-    with open(save_path, &#34;w&#34;) as outfile:
-        json.dump(repo_urls, outfile)
-    return repo_urls</code></pre>
+<pre><code class="python">def get_auth():
+    &#34;&#34;&#34;Returns auth tuple for requests, or None if unauthenticated.&#34;&#34;&#34;
+    username, token = get_github_auth()
+    if token:
+        return (username or token, token)
+    return None</code></pre>
 </details>
 </dd>
-<dt id="top_github_scraper.scrape_user.get_top_users"><code class="name flex">
-<span>def <span class="ident">get_top_users</span></span>(<span>keyword: str, start_page: int = 1, stop_page: int = 50, save_directory: str = '.')</span>
+<dt id="top_github_scraper.auth.get_github_auth"><code class="name flex">
+<span>def <span class="ident">get_github_auth</span></span>(<span>)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Get the information of the owners and contributors of the repositories pop up when searching for a specific
-keyword on GitHub.</p>
-<p>See PARAMETERs.md for a description of the parameters of this function.</p></div>
+<div class="desc"><p>Returns (username, token) or (None, None). Cached after first call.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_top_users(
-    keyword: str,
-    start_page: int = 1,
-    stop_page: int = 50,
-    save_directory: str = &#34;.&#34;,
-):
-    &#34;&#34;&#34;
-    Get the information of the owners and contributors of the repositories pop up when searching for a specific
-    keyword on GitHub.
+<pre><code class="python">@lru_cache(maxsize=1)
+def get_github_auth():
+    &#34;&#34;&#34;Returns (username, token) or (None, None). Cached after first call.&#34;&#34;&#34;
+    username = os.getenv(&#34;GITHUB_USERNAME&#34;)
+    token = os.getenv(&#34;GITHUB_TOKEN&#34;)
 
-    See PARAMETERs.md for a description of the parameters of this function.
-    &#34;&#34;&#34;
-    safe_keyword = keyword.replace(&#34; &#34;, &#34;_&#34;)
-    full_url_save_path = f&#34;{save_directory}/top_user_urls_{safe_keyword}_{start_page}_{stop_page}.json&#34;
-    user_save_path = f&#34;{save_directory}/top_user_info_{safe_keyword}_{start_page}_{stop_page}.csv&#34;
-    if not Path(full_url_save_path).exists():
-        get_top_user_urls(
-            keyword=keyword,
-            start_page=start_page,
-            stop_page=stop_page,
-            save_directory=save_directory,
+    # Fallback: get token from gh CLI
+    if not token:
+        try:
+            result = subprocess.run(
+                [&#34;gh&#34;, &#34;auth&#34;, &#34;token&#34;],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0:
+                token = result.stdout.strip()
+        except (FileNotFoundError, subprocess.SubprocessError):
+            pass
+
+    # Fallback: get username from gh CLI
+    if not username and token:
+        try:
+            result = subprocess.run(
+                [&#34;gh&#34;, &#34;api&#34;, &#34;user&#34;, &#34;-q&#34;, &#34;.login&#34;],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0:
+                username = result.stdout.strip()
+        except (FileNotFoundError, subprocess.SubprocessError):
+            pass
+
+    if not token:
+        logging.warning(
+            &#34;You are using the GitHub API as an unauthenticated user. &#34;
+            &#34;Limited to 60 requests/hour. Set GITHUB_USERNAME/GITHUB_TOKEN &#34;
+            &#34;in .env or run `gh auth login`.&#34;
         )
-    with open(full_url_save_path, &#34;r&#34;) as infile:
-        user_urls = json.load(infile)
-        url = &#34;https://api.github.com/users&#34;
-        urls = [url + user for user in user_urls]
-        top_users = UserProfileGetter(urls).get_all_user_profiles()
-        top_users.to_csv(user_save_path)
-        return top_users</code></pre>
+
+    return username, token</code></pre>
 </details>
 </dd>
 </dl>
@@ -188,8 +183,8 @@ keyword on GitHub.</p>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="top_github_scraper.scrape_user.get_top_user_urls" href="#top_github_scraper.scrape_user.get_top_user_urls">get_top_user_urls</a></code></li>
-<li><code><a title="top_github_scraper.scrape_user.get_top_users" href="#top_github_scraper.scrape_user.get_top_users">get_top_users</a></code></li>
+<li><code><a title="top_github_scraper.auth.get_auth" href="#top_github_scraper.auth.get_auth">get_auth</a></code></li>
+<li><code><a title="top_github_scraper.auth.get_github_auth" href="#top_github_scraper.auth.get_github_auth">get_github_auth</a></code></li>
 </ul>
 </li>
 </ul>
