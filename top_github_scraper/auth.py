@@ -25,7 +25,7 @@ def get_github_auth():
             )
             if result.returncode == 0:
                 token = result.stdout.strip()
-        except FileNotFoundError:
+        except (FileNotFoundError, subprocess.SubprocessError):
             pass
 
     # Fallback: get username from gh CLI
@@ -39,7 +39,7 @@ def get_github_auth():
             )
             if result.returncode == 0:
                 username = result.stdout.strip()
-        except FileNotFoundError:
+        except (FileNotFoundError, subprocess.SubprocessError):
             pass
 
     if not token:
