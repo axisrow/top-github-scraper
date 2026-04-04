@@ -20,7 +20,7 @@ def get_top_user_urls(
     """
     safe_keyword = keyword.replace(" ", "_")
     Path(save_directory).mkdir(parents=True, exist_ok=True)
-    save_path = f"{save_directory}/top_repo_urls_{safe_keyword}_{start_page}_{stop_page}.json"
+    save_path = f"{save_directory}/top_user_urls_{safe_keyword}_{start_page}_{stop_page}.json"
     repo_urls = ScrapeGithubUrl(
         keyword, "Users", "followers", start_page, stop_page
     ).scrape_top_repo_url_multiple_pages()
@@ -42,7 +42,7 @@ def get_top_users(
     See PARAMETERs.md for a description of the parameters of this function.
     """
     safe_keyword = keyword.replace(" ", "_")
-    full_url_save_path = f"{save_directory}/top_repo_urls_{safe_keyword}_{start_page}_{stop_page}.json"
+    full_url_save_path = f"{save_directory}/top_user_urls_{safe_keyword}_{start_page}_{stop_page}.json"
     user_save_path = f"{save_directory}/top_user_info_{safe_keyword}_{start_page}_{stop_page}.csv"
     if not Path(full_url_save_path).exists():
         get_top_user_urls(
