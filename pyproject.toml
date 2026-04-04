@@ -10,7 +10,7 @@ readme = "README.md"
 license = "Apache-2.0"
 
 [tool.poetry.dependencies]
-python = ">=3.7.1,<4.0"
+python = ">=3.8,<4.0"
 requests = "^2.25.1"
 bs4 = "^0.0.1"
 pandas = "^1.2.2"
@@ -28,6 +28,15 @@ isort = "^5.7.0"
 icecream = "^2.1.0"
 loguru = "^0.5.3"
 pytest = "^6.2.2"
+vcrpy = {version = "^6.0", python = ">=3.8"}
+pytest-cov = {version = "^4.0", python = ">=3.8"}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=top_github_scraper --cov-report=term-missing -m 'not integration'"
+markers = [
+    "integration: tests that hit the real GitHub API (run with -m integration)",
+]
 
 [tool.black]
 line-length = 79
