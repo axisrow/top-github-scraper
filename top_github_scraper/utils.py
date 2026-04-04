@@ -11,7 +11,7 @@ from rich import print
 from rich.progress import track
 from tqdm import tqdm
 
-from top_github_scraper.auth import TOKEN, USERNAME
+from top_github_scraper.auth import get_auth
 
 warnings.filterwarnings("ignore")
 
@@ -106,7 +106,7 @@ class ScrapeGithubUrl:
         url = self._keyword_to_url(
             page_num, self.keyword, type=self.type, sort_by=self.sort_by
         )
-        page = requests.get(url, auth=(USERNAME, TOKEN))
+        page = requests.get(url, auth=get_auth())
         if page.status_code != 200:
             print(
                 f"Bad HTTP Response from: {url}. Got an HTTP repsonse of: {page.status_code}.\n Please confirm this URL is valid."
@@ -166,7 +166,7 @@ class UserProfileGetter:
         ]
 
     def _get_one_user_profile(self, profile_url: str):
-        profile = requests.get(profile_url, auth=(USERNAME, TOKEN)).json()
+        profile = requests.get(profile_url, auth=get_auth()).json()
         return {
             key: val
             for key, val in profile.items()
