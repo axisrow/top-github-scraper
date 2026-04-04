@@ -28,7 +28,7 @@ def get_top_user_urls(
 
 
 def get_top_users(
-    keyword: int,
+    keyword: str,
     start_page: int = 1,
     stop_page: int = 50,
     save_directory: str = ".",
