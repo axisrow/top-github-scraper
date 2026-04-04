@@ -28,6 +28,12 @@ icecream = "^2.1.0"
 loguru = "^0.5.3"
 pytest = "^6.2.2"
 pdoc = {version = "^16.0.0", python = ">=3.10"}
+vcrpy = {version = "^6.0", python = ">=3.8"}
+pytest-cov = {version = "^4.0", python = ">=3.8"}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=top_github_scraper --cov-report=term-missing"
 
 [tool.black]
 line-length = 79
