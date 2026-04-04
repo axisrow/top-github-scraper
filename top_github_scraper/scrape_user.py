@@ -14,7 +14,7 @@ def get_top_user_urls(
     keyword: str,
     save_directory: str = ".",
     start_page: int = 1,
-    stop_page: int = 50,
+    stop_page: int = 11,
 ):
     """Get the URLs of the repositories pop up when searching for a specific
     keyword on GitHub.
@@ -24,18 +24,18 @@ def get_top_user_urls(
     safe_keyword = keyword.replace(" ", "_")
     Path(save_directory).mkdir(parents=True, exist_ok=True)
     save_path = f"{save_directory}/top_user_urls_{safe_keyword}_{start_page}_{stop_page}.json"
-    repo_urls = SearchGithubUsers(
+    user_urls = SearchGithubUsers(
         keyword, "followers", start_page, stop_page
     ).search_multiple_pages()
     with open(save_path, "w") as outfile:
-        json.dump(repo_urls, outfile)
-    return repo_urls
+        json.dump(user_urls, outfile)
+    return user_urls
 
 
 def get_top_users(
     keyword: str,
     start_page: int = 1,
-    stop_page: int = 50,
+    stop_page: int = 11,
     save_directory: str = ".",
 ):
     """

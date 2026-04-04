@@ -169,16 +169,34 @@ class SearchGithubUsers:
         self.keyword = keyword
         self.sort_by = sort_by if sort_by != "best_match" else ""
         self.start_page_num = start_page_num
+        _MAX_PAGE = 11  # GitHub Search API hard limit: 1000 results (10 pages)
+        if stop_page_num > _MAX_PAGE:
+            logging.warning(
+                f"GitHub Search API supports at most 1000 results "
+                f"(pages 1–10). Clamping stop_page from {stop_page_num} "
+                f"to {_MAX_PAGE}."
+            )
+            stop_page_num = _MAX_PAGE
         self.stop_page_num = stop_page_num
 
     def _search_one_page(self, page_num: int) -> List[str]:
-        keyword_encoded = "+".join(self.keyword.split())
-        sort_param = f"&sort={self.sort_by}" if self.sort_by else ""
-        url = (
-            f"{self._BASE_URL}?q={keyword_encoded}"
-            f"&order=desc{sort_param}&per_page=100&page={page_num}"
+        params: dict = {
+            "q": self.keyword,
+            "per_page": 100,
+            "page": page_num,
+        }
+        if self.sort_by:
+            params["sort"] = self.sort_by
+            params["order"] = "desc"
+        response = requests.get(
+            self._BASE_URL, params=params, auth=get_auth()
         )
-        response = requests.get(url, auth=get_auth())
+        if response.status_code in (403, 429):
+            logging.warning(
+                f"GitHub Search API rate limit hit (status "
+                f"{response.status_code}) on page {page_num}"
+            )
+            return []
         if response.status_code != 200:
             logging.warning(
                 f"GitHub Search API returned {response.status_code} "
