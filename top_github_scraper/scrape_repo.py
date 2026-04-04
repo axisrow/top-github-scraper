@@ -73,6 +73,9 @@ class RepoScraper:
 
         return repo_important_info
 
+    def _find_max_n_top_contributors(self, n_available: int) -> int:
+        return min(n_available, self.max_n_top_contributors)
+
     def _get_contributor_repo_of_one_repo(self, repo_url: str):
         base_url = (
             f"https://api.github.com/repos{repo_url}/contributors"
@@ -96,7 +99,10 @@ class RepoScraper:
             if not contributor_page:
                 break
 
-            for contributor in contributor_page:
+            n_from_page = self._find_max_n_top_contributors(
+                len(contributor_page)
+            )
+            for contributor in contributor_page[:n_from_page]:
                 if collected >= self.max_n_top_contributors:
                     break
                 self._get_contributor_general_info(
