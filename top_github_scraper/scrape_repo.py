@@ -11,7 +11,11 @@ from rich.progress import track
 from tqdm import tqdm
 
 from top_github_scraper.auth import get_auth
-from top_github_scraper.utils import ScrapeGithubUrl, UserProfileGetter, isnotebook
+from top_github_scraper.utils import (
+    ScrapeGithubUrl,
+    UserProfileGetter,
+    isnotebook,
+)
 
 
 class RepoScraper:
@@ -165,13 +169,13 @@ def get_top_repo_urls(
     except Exception as e:
         print(e)
         logging.error(
-            """You might be hitting the rate limit of the HitHub API. Have you authenticated your user account?
+            """You might be hitting the rate limit of the GitHub API. Have you authenticated your user account?
                       If you have exceeded the rate limit as an authenticated user, either decrease the number of pages to scrape or to wait until more requests are available."""
         )
 
 
 def get_top_repos(
-    keyword: int,
+    keyword: str,
     sort_by: str = "best_match",
     save_directory: str = ".",
     max_n_top_contributors: int = 10,
@@ -209,13 +213,13 @@ def get_top_repos(
     except Exception as e:
         print(e)
         logging.error(
-            """You might be hitting the rate limit of the HitHub API. Have you authenticated your user account?
+            """You might be hitting the rate limit of the GitHub API. Have you authenticated your user account?
                       If you have exceeded the rate limit as an authenticated user, either decrease the number of pages to scrape or to wait until more requests are available."""
         )
 
 
 def get_top_contributors(
-    keyword: int,
+    keyword: str,
     sort_by: str = "best_match",
     max_n_top_contributors: int = 10,
     start_page: int = 1,
