@@ -11,7 +11,7 @@ interactions:
       User-Agent:
       - python-requests/2.33.1
     method: GET
-    uri: https://api.github.com/search/users?q=machine+learning&order=desc&sort=followers&per_page=100&page=1
+    uri: https://api.github.com/search/users?q=machine+learning&per_page=100&page=1&sort=followers&order=desc
   response:
     body:
       string: !!binary |
