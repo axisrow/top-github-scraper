@@ -3,8 +3,8 @@ import os
 
 import pandas as pd
 import pytest
-import vcr
 
+from tests.conftest import vcr
 from top_github_scraper.scrape_user import get_top_user_urls, get_top_users
 
 CASSETTES_DIR = os.path.join(os.path.dirname(__file__), "cassettes")

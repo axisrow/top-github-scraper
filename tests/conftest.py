@@ -1,8 +1,16 @@
 import os
 
 import pytest
+import vcr as vcrpy
 
-import vcr
+CASSETTES_DIR = os.path.join(os.path.dirname(__file__), "cassettes")
+
+vcr = vcrpy.VCR(
+    cassette_library_dir=CASSETTES_DIR,
+    record_mode="none",
+    match_on=["uri", "method"],
+    filter_headers=["authorization"],
+)
 
 
 def pytest_addoption(parser):
@@ -30,24 +38,9 @@ def mock_env_vars(monkeypatch, request):
         monkeypatch.setenv("GITHUB_TOKEN", "test_token")
 
 
-CASSETTES_DIR = os.path.join(os.path.dirname(__file__), "cassettes")
-
-
 @pytest.fixture
 def cassettes_dir():
     return CASSETTES_DIR
-
-
-@pytest.fixture
-def vcr_cassette_dir(request, record_vcr):
-    """Return cassette path; record mode if --record-vcr flag used."""
-    record_mode = "new_episodes" if record_vcr else "none"
-    return vcr.VCR(
-        cassette_library_dir=CASSETTES_DIR,
-        record_mode=record_mode,
-        match_on=["uri", "method"],
-        filter_headers=["authorization"],
-    )
 
 
 @pytest.fixture
