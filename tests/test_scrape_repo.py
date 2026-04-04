@@ -17,25 +17,6 @@ from top_github_scraper.scrape_repo import (
 CASSETTES_DIR = os.path.join(os.path.dirname(__file__), "cassettes")
 
 
-class TestFindMaxNTopContributors:
-    def test_returns_n_available_when_below_cap(self):
-        scraper = RepoScraper(
-            ["/test/repo"], max_n_top_contributors=50
-        )
-        assert scraper._find_max_n_top_contributors(10) == 10
-
-    def test_returns_cap_when_n_available_exceeds_cap(self):
-        scraper = RepoScraper(
-            ["/test/repo"], max_n_top_contributors=5
-        )
-        assert scraper._find_max_n_top_contributors(100) == 5
-
-    def test_returns_exact_cap_when_equal(self):
-        scraper = RepoScraper(
-            ["/test/repo"], max_n_top_contributors=20
-        )
-        assert scraper._find_max_n_top_contributors(20) == 20
-
 
 class TestGetContributorGeneralInfo:
     def test_appends_one_contributor(self):
