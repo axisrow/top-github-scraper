@@ -3,12 +3,15 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
+import vcr
 
 from top_github_scraper.utils import (
     ScrapeGithubUrl,
     UserProfileGetter,
     isnotebook,
 )
+
+CASSETTES_DIR = os.path.join(os.path.dirname(__file__), "cassettes")
 
 
 class TestKeywordToUrl:
@@ -175,14 +178,10 @@ class TestScrapeGithubUrlErrorHandling:
             assert len(result) == 0
 
 
-# --- Integration tests (VCR) ---
-
-import vcr
-
-CASSETTES_DIR = os.path.join(os.path.dirname(__file__), "cassettes")
+# --- Unit tests with VCR cassettes (recorded responses, no network) ---
 
 
-class TestScrapeGithubUrlIntegration:
+class TestScrapeGithubUrlVcr:
     @vcr.use_cassette(
         os.path.join(CASSETTES_DIR, "scrape_one_page.yaml")
     )
@@ -206,7 +205,7 @@ class TestScrapeGithubUrlIntegration:
         assert len(urls) > 0
 
 
-class TestUserProfileGetterIntegration:
+class TestUserProfileGetterVcr:
     @vcr.use_cassette(
         os.path.join(CASSETTES_DIR, "user_profile.yaml")
     )
@@ -220,3 +219,32 @@ class TestUserProfileGetterIntegration:
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 2
         assert "login" in result.columns
+
+
+# --- Integration tests (real GitHub API) ---
+
+
+@pytest.mark.integration
+class TestScrapeGithubUrlIntegration:
+    def test_scrape_one_page_from_real_api(self):
+        scraper = ScrapeGithubUrl(
+            "machine learning", "Repositories", "stars", 1, 2
+        )
+        urls = scraper._scrape_top_repo_url_one_page(1)
+        assert isinstance(urls, list)
+        assert len(urls) > 0
+        for url in urls:
+            assert url.startswith("/")
+
+
+@pytest.mark.integration
+class TestUserProfileGetterIntegration:
+    def test_get_real_user_profile(self):
+        getter = UserProfileGetter(
+            ["https://api.github.com/users/jakevdp"]
+        )
+        result = getter._get_one_user_profile(
+            "https://api.github.com/users/jakevdp"
+        )
+        assert result["login"] == "jakevdp"
+        assert "name" in result
