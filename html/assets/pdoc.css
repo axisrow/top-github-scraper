@@ -1,0 +1,485 @@
+:root {
+    --highlight-color: #fe9;
+}
+
+html {
+    box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: inherit;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.5em;
+}
+
+.flex {
+    display: flex !important;
+}
+
+#content {
+    padding: 20px;
+}
+
+#sidebar {
+    padding: 30px;
+    overflow: hidden;
+}
+
+#sidebar > *:last-child {
+    margin-bottom: 2cm;
+}
+
+.http-server-breadcrumbs {
+    margin: 0 0 15px;
+    font-size: 130%;
+}
+
+#footer {
+    padding: 5px 30px;
+    border-top: 1px solid #ddd;
+    color: #666;
+    font-size: 0.75em;
+    text-align: right;
+}
+
+#footer p {
+    display: inline-block;
+    margin: 0 0 0 1em;
+}
+
+#footer p:last-child {
+    margin-right: 30px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+    font-weight: 300;
+}
+
+h1 {
+    font-size: 2.5em;
+    line-height: 1.1em;
+}
+
+h2 {
+    margin: 1em 0 0.5em;
+    font-size: 1.75em;
+}
+
+h3 {
+    margin: 25px 0 10px;
+    font-size: 1.4em;
+}
+
+h4 {
+    margin: 0;
+    font-size: 105%;
+}
+
+h1:target,
+h2:target,
+h3:target,
+h4:target,
+h5:target,
+h6:target {
+    padding: 0.2em 0;
+    background: var(--highlight-color);
+}
+
+a {
+    color: #058;
+    text-decoration: none;
+    transition: color 0.3s ease-in-out;
+}
+
+a:hover {
+    color: #e82;
+}
+
+code,
+pre {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+.title code {
+    font-weight: bold;
+}
+
+h2[id^="header-"] {
+    margin-top: 2em;
+}
+
+.ident {
+    color: #900;
+}
+
+pre code {
+    background: #f8f8f8;
+    font-size: 0.8em;
+    line-height: 1.4em;
+}
+
+code {
+    padding: 1px 4px;
+    overflow-wrap: break-word;
+    background: #f2f2f1;
+}
+
+h1 code {
+    background: transparent;
+}
+
+pre {
+    margin: 1em 0;
+    padding: 1ex;
+    border: 0;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    background: #f8f8f8;
+    overflow-x: auto;
+}
+
+#http-server-module-list {
+    display: flex;
+    flex-flow: column;
+}
+
+#http-server-module-list div {
+    display: flex;
+}
+
+#http-server-module-list dt {
+    min-width: 10%;
+}
+
+#http-server-module-list p {
+    margin-top: 0;
+}
+
+.toc ul,
+#index {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+
+#index code {
+    background: transparent;
+}
+
+#index h3 {
+    border-bottom: 1px solid #ddd;
+}
+
+#index ul {
+    padding: 0;
+}
+
+#index h4 {
+    margin-top: 0.6em;
+    font-weight: bold;
+}
+
+dl {
+    margin-bottom: 2em;
+}
+
+dl dl:last-child {
+    margin-bottom: 4em;
+}
+
+dd {
+    margin: 0 0 1em 3em;
+}
+
+#header-classes + dl > dd {
+    margin-bottom: 3em;
+}
+
+dd dd {
+    margin-left: 2em;
+}
+
+dd p {
+    margin: 10px 0;
+}
+
+.name {
+    display: inline-block;
+    min-width: 40%;
+    padding: 5px 10px;
+    background: #eee;
+    font-size: 0.85em;
+    font-weight: bold;
+}
+
+.name:hover {
+    background: #e0e0e0;
+}
+
+dt:target .name {
+    background: var(--highlight-color);
+}
+
+.name > span:first-child {
+    white-space: nowrap;
+}
+
+.name.class > span:nth-child(2) {
+    margin-left: 0.4em;
+}
+
+.inherited {
+    padding-left: 1em;
+    border-left: 5px solid #eee;
+    color: #999;
+}
+
+.inheritance em {
+    font-style: normal;
+    font-weight: bold;
+}
+
+.desc h2 {
+    font-size: 1.25em;
+    font-weight: 400;
+}
+
+.desc h3 {
+    font-size: 1em;
+}
+
+.desc dt code {
+    background: inherit;
+}
+
+.source summary,
+.git-link-div {
+    color: #666;
+    font-size: 0.8em;
+    font-weight: 400;
+    text-align: right;
+    text-transform: uppercase;
+}
+
+.source summary > * {
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.git-link {
+    margin-left: 1em;
+    color: inherit;
+}
+
+.source pre {
+    max-height: 500px;
+    margin: 0;
+    overflow: auto;
+}
+
+.source pre code {
+    overflow: visible;
+    font-size: 12px;
+}
+
+.hlist {
+    list-style: none;
+}
+
+.hlist li {
+    display: inline;
+}
+
+.hlist li::after {
+    content: ",\2002";
+}
+
+.hlist li:last-child::after {
+    content: none;
+}
+
+.hlist .hlist {
+    display: inline;
+    padding-left: 1em;
+}
+
+img {
+    max-width: 100%;
+}
+
+td {
+    padding: 0 0.5em;
+}
+
+.admonition {
+    margin-bottom: 1em;
+    padding: 0.1em 0.5em;
+}
+
+.admonition-title {
+    font-weight: bold;
+}
+
+.admonition.note,
+.admonition.info,
+.admonition.important {
+    background: #aef;
+}
+
+.admonition.todo,
+.admonition.versionadded,
+.admonition.tip,
+.admonition.hint {
+    background: #dfd;
+}
+
+.admonition.warning,
+.admonition.versionchanged,
+.admonition.deprecated {
+    background: #fd4;
+}
+
+.admonition.error,
+.admonition.danger,
+.admonition.caution {
+    background: lightpink;
+}
+
+@media (min-width: 200ex) {
+    #index .two-column {
+        column-count: 2;
+    }
+}
+
+@media (min-width: 300ex) {
+    #index .two-column {
+        column-count: 3;
+    }
+}
+
+@media screen and (min-width: 700px) {
+    #sidebar {
+        position: sticky;
+        top: 0;
+        width: 30%;
+        height: 100vh;
+        overflow: auto;
+    }
+
+    #content {
+        width: 70%;
+        max-width: 100ch;
+        padding: 3em 4em;
+        border-left: 1px solid #ddd;
+    }
+
+    pre code {
+        font-size: 1em;
+    }
+
+    .item .name {
+        font-size: 1em;
+    }
+
+    main {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+    }
+
+    .toc ul ul,
+    #index ul {
+        padding-left: 1.5em;
+    }
+
+    .toc > ul > li {
+        margin-top: 0.5em;
+    }
+}
+
+@media print {
+    #sidebar h1 {
+        page-break-before: always;
+    }
+
+    .source {
+        display: none;
+    }
+}
+
+@media print {
+    * {
+        background: transparent !important;
+        box-shadow: none !important;
+        color: #000 !important;
+        text-shadow: none !important;
+    }
+
+    a[href]::after {
+        content: " (" attr(href) ")";
+        font-size: 90%;
+    }
+
+    a[href][title]::after {
+        content: none;
+    }
+
+    abbr[title]::after {
+        content: " (" attr(title) ")";
+    }
+
+    .ir a::after,
+    a[href^="javascript:"]::after,
+    a[href^="#"]::after {
+        content: "";
+    }
+
+    pre,
+    blockquote {
+        page-break-inside: avoid;
+        border: 1px solid #999;
+    }
+
+    thead {
+        display: table-header-group;
+    }
+
+    tr,
+    img {
+        page-break-inside: avoid;
+    }
+
+    img {
+        max-width: 100% !important;
+    }
+
+    @page {
+        margin: 0.5cm;
+    }
+
+    p,
+    h2,
+    h3 {
+        widows: 3;
+        orphans: 3;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        page-break-after: avoid;
+    }
+}
