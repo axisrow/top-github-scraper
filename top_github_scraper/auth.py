@@ -1,14 +1,16 @@
 import logging
 import os
 import subprocess
+from functools import lru_cache
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
 
+@lru_cache(maxsize=1)
 def get_github_auth():
-    """Returns (username, token) or (None, None)."""
+    """Returns (username, token) or (None, None). Cached after first call."""
     username = os.getenv("GITHUB_USERNAME")
     token = os.getenv("GITHUB_TOKEN")
 
@@ -50,4 +52,7 @@ def get_github_auth():
     return username, token
 
 
-USERNAME, TOKEN = get_github_auth()
+def get_auth():
+    """Returns auth tuple for requests, or None if unauthenticated."""
+    username, token = get_github_auth()
+    return (username, token) if username and token else None

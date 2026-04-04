@@ -1,20 +1,23 @@
-from dataclasses import dataclass
-from bs4 import BeautifulSoup
-import requests
-from rich.progress import track
-from rich import print 
-import pandas as pd 
-import warnings
-from typing import List
-from IPython import get_ipython
-from tqdm import tqdm
 import logging
+import warnings
+from dataclasses import dataclass
+from typing import List
 
-from top_github_scraper.auth import USERNAME, TOKEN
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+from IPython import get_ipython
+from rich import print
+from rich.progress import track
+from tqdm import tqdm
+
+from top_github_scraper.auth import get_auth
 
 warnings.filterwarnings("ignore")
 
-SCRAPE_CLASS = {'Users': 'mr-1', 'Repositories': "v-align-middle"}
+SCRAPE_CLASS = {"Users": "mr-1", "Repositories": "v-align-middle"}
+
+
 class ScrapeGithubUrl:
     """Scrape top Github urls based on a certain keyword and type
 
@@ -24,8 +27,8 @@ class ScrapeGithubUrl:
         keyword to search on Github
     type: str
         whether to search for User or Repositories
-    sort_by: str 
-        sort by best match or most stars, by default 'best_match', which will sort by best match. 
+    sort_by: str
+        sort by best match or most stars, by default 'best_match', which will sort by best match.
         Use 'stars' to sort by most stars.
     start_page_num: int
         page number to start scraping. The default is 0
@@ -37,13 +40,20 @@ class ScrapeGithubUrl:
     List[str]
     """
 
-    def __init__(self,keyword: str, type: str, sort_by: str, start_page_num: int, stop_page_num: int):
+    def __init__(
+        self,
+        keyword: str,
+        type: str,
+        sort_by: str,
+        start_page_num: int,
+        stop_page_num: int,
+    ):
         self.keyword = keyword
         self.type = type
         self.start_page_num = start_page_num
         self.stop_page_num = stop_page_num
-        if sort_by =='best_match':
-            self.sort_by = ''
+        if sort_by == "best_match":
+            self.sort_by = ""
         else:
             self.sort_by = sort_by
 
@@ -55,10 +65,14 @@ class ScrapeGithubUrl:
 
     def _scrape_top_repo_url_one_page(self, page_num: int):
         """Scrape urls of top Github repositories in 1 page"""
-        url = self._keyword_to_url(page_num, self.keyword, type=self.type, sort_by=self.sort_by)
-        page = requests.get(url, auth=(USERNAME, TOKEN))
+        url = self._keyword_to_url(
+            page_num, self.keyword, type=self.type, sort_by=self.sort_by
+        )
+        page = requests.get(url, auth=get_auth())
         if page.status_code != 200:
-            print(f"Bad HTTP Response from: {url}. Got an HTTP repsonse of: {page.status_code}.\n Please confirm this URL is valid.")
+            print(
+                f"Bad HTTP Response from: {url}. Got an HTTP repsonse of: {page.status_code}.\n Please confirm this URL is valid."
+            )
 
         soup = BeautifulSoup(page.text, "html.parser")
         a_tags = soup.find_all("a", class_=SCRAPE_CLASS[self.type])
@@ -75,13 +89,14 @@ class ScrapeGithubUrl:
                 desc="Scraping top GitHub URLs...",
             ):
                 urls.extend(self._scrape_top_repo_url_one_page(page_num))
-        else: 
+        else:
             for page_num in track(
                 range(self.start_page_num, self.stop_page_num),
                 description="Scraping top GitHub URLs...",
             ):
                 urls.extend(self._scrape_top_repo_url_one_page(page_num))
         return urls
+
 
 class UserProfileGetter:
     """Get the information from users' homepage"""
@@ -107,7 +122,7 @@ class UserProfileGetter:
         ]
 
     def _get_one_user_profile(self, profile_url: str):
-        profile = requests.get(profile_url, auth=(USERNAME, TOKEN)).json()
+        profile = requests.get(profile_url, auth=get_auth()).json()
         return {
             key: val
             for key, val in profile.items()
@@ -118,11 +133,11 @@ class UserProfileGetter:
 
         if isnotebook():
             all_contributors = [
-            self._get_one_user_profile(url)
-            for url in tqdm(
-                self.urls, desc="Scraping top GitHub profiles..."
-            )
-        ]
+                self._get_one_user_profile(url)
+                for url in tqdm(
+                    self.urls, desc="Scraping top GitHub profiles..."
+                )
+            ]
         else:
             all_contributors = [
                 self._get_one_user_profile(url)
@@ -140,11 +155,11 @@ class UserProfileGetter:
 def isnotebook():
     try:
         shell = get_ipython().__class__.__name__
-        if shell == 'ZMQInteractiveShell':
-            return True   # Jupyter notebook or qtconsole
-        elif shell == 'TerminalInteractiveShell':
+        if shell == "ZMQInteractiveShell":
+            return True  # Jupyter notebook or qtconsole
+        elif shell == "TerminalInteractiveShell":
             return False  # Terminal running IPython
         else:
             return False  # Other type (?)
     except NameError:
-        return False      # Probably standard Python interpreter
+        return False  # Probably standard Python interpreter

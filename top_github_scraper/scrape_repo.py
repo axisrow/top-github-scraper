@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from pathlib import Path
 from typing import List
@@ -8,9 +9,10 @@ import requests
 from rich import print
 from rich.progress import track
 from tqdm import tqdm
-from top_github_scraper.auth import USERNAME, TOKEN
+
+from top_github_scraper.auth import get_auth
 from top_github_scraper.utils import ScrapeGithubUrl, UserProfileGetter, isnotebook
-import logging
+
 
 class RepoScraper:
     """Scrape information of repos and the
@@ -25,12 +27,13 @@ class RepoScraper:
 
         if isnotebook():
             for repo_url in tqdm(
-            self.repo_urls, desc="Scraping top GitHub repositories..."
+                self.repo_urls, desc="Scraping top GitHub repositories..."
             ):
                 top_repo_infos.append(self._get_repo_information(repo_url))
         else:
             for repo_url in track(
-                self.repo_urls, description="Scraping top GitHub repositories..."
+                self.repo_urls,
+                description="Scraping top GitHub repositories...",
             ):
                 top_repo_infos.append(self._get_repo_information(repo_url))
 
@@ -38,20 +41,22 @@ class RepoScraper:
 
     def _get_repo_information(self, repo_url: str):
         repo_info_url = f"https://api.github.com/repos{repo_url}"
-        http_response = requests.get(repo_info_url, auth=(USERNAME, TOKEN))
+        http_response = requests.get(repo_info_url, auth=get_auth())
         # Checking for a good response on HTTP get request.
         # An HTTP response of 200 indicates a successful response packet.
         if http_response.status_code != 200:
-            logging.error(f"You are getting a bad HTTP response when you are requesting info from this URL: {repo_info_url}")
+            logging.error(
+                f"You are getting a bad HTTP response when you are requesting info from this URL: {repo_info_url}"
+            )
         repo_info = http_response.json()
         info_to_scrape = ["stargazers_count", "forks_count"]
         repo_important_info = {}
         for info in info_to_scrape:
             repo_important_info[info] = repo_info[info]
 
-        repo_important_info[
-            "contributors"
-        ] = self._get_contributor_repo_of_one_repo(repo_url)
+        repo_important_info["contributors"] = (
+            self._get_contributor_repo_of_one_repo(repo_url)
+        )
 
         return repo_important_info
 
@@ -61,7 +66,7 @@ class RepoScraper:
         contributor_url = (
             f"https://api.github.com/repos{repo_url}/contributors"
         )
-        http_response = requests.get(contributor_url, auth=(USERNAME, TOKEN))
+        http_response = requests.get(contributor_url, auth=get_auth())
         # Return an empty dictionary if we encouter an error for a particular URL.
         # This will allow us to keep parsing the rest of the URLs we need to parse without erroring out.
         if http_response.status_code != 200:
@@ -136,22 +141,22 @@ class DataProcessor:
 
 def get_top_repo_urls(
     keyword: str,
-    sort_by: str='best_match', 
-    save_directory: str=".",
+    sort_by: str = "best_match",
+    save_directory: str = ".",
     start_page: int = 1,
     stop_page: int = 10,
 ):
     """Get the URLs of the repositories pop up when searching for a specific
     keyword on GitHub.
-    
+
     See PARAMETERs.md for a description of the parameters of this function
     """
     safe_keyword = keyword.replace(" ", "_")
-    try: 
+    try:
         Path(save_directory).mkdir(parents=True, exist_ok=True)
-        full_path = f'{save_directory}/top_repo_urls_{safe_keyword}_{start_page}_{stop_page}.json'
+        full_path = f"{save_directory}/top_repo_urls_{safe_keyword}_{start_page}_{stop_page}.json"
         repo_urls = ScrapeGithubUrl(
-            keyword, 'Repositories', sort_by, start_page, stop_page
+            keyword, "Repositories", sort_by, start_page, stop_page
         ).scrape_top_repo_url_multiple_pages()
 
         with open(full_path, "w") as outfile:
@@ -159,32 +164,38 @@ def get_top_repo_urls(
         return repo_urls
     except Exception as e:
         print(e)
-        logging.error("""You might be hitting the rate limit of the HitHub API. Have you authenticated your user account?
-                      If you have exceeded the rate limit as an authenticated user, either decrease the number of pages to scrape or to wait until more requests are available.""")
+        logging.error(
+            """You might be hitting the rate limit of the HitHub API. Have you authenticated your user account?
+                      If you have exceeded the rate limit as an authenticated user, either decrease the number of pages to scrape or to wait until more requests are available."""
+        )
 
 
 def get_top_repos(
     keyword: int,
-    sort_by: str='best_match',
-    save_directory: str=".",
+    sort_by: str = "best_match",
+    save_directory: str = ".",
     max_n_top_contributors: int = 10,
     start_page: int = 1,
     stop_page: int = 10,
 ):
     """Get the information of the repositories pop up when searching for a specific
     keyword on GitHub.
-    
+
     See PARAMETERs.md for a description of the parameters of this function
     """
     safe_keyword = keyword.replace(" ", "_")
     try:
-        full_url_save_path = (
-            f"{save_directory}/top_repo_urls_{safe_keyword}_{start_page}_{stop_page}.json"
-        )
+        full_url_save_path = f"{save_directory}/top_repo_urls_{safe_keyword}_{start_page}_{stop_page}.json"
         repo_save_path = f"{save_directory}/top_repo_info_{safe_keyword}_{start_page}_{stop_page}.json"
 
         if not Path(full_url_save_path).exists():
-            get_top_repo_urls(keyword=keyword, sort_by=sort_by, save_directory=save_directory, start_page=start_page, stop_page=stop_page)
+            get_top_repo_urls(
+                keyword=keyword,
+                sort_by=sort_by,
+                save_directory=save_directory,
+                start_page=start_page,
+                stop_page=stop_page,
+            )
         with open(full_url_save_path, "r") as infile:
             repo_urls = json.load(infile)
             top_repos = RepoScraper(
@@ -195,30 +206,31 @@ def get_top_repos(
             json.dump(top_repos, outfile)
         return top_repos
 
-    except Exception as e:  
+    except Exception as e:
         print(e)
-        logging.error("""You might be hitting the rate limit of the HitHub API. Have you authenticated your user account?
-                      If you have exceeded the rate limit as an authenticated user, either decrease the number of pages to scrape or to wait until more requests are available.""")
+        logging.error(
+            """You might be hitting the rate limit of the HitHub API. Have you authenticated your user account?
+                      If you have exceeded the rate limit as an authenticated user, either decrease the number of pages to scrape or to wait until more requests are available."""
+        )
+
 
 def get_top_contributors(
     keyword: int,
-    sort_by: str='best_match', 
+    sort_by: str = "best_match",
     max_n_top_contributors: int = 10,
     start_page: int = 1,
     stop_page: int = 10,
-    get_user_info_only: bool=True, 
-    save_directory: str=".",
+    get_user_info_only: bool = True,
+    save_directory: str = ".",
 ):
     """
     Get the information of the owners and contributors of the repositories pop up when searching for a specific
     keyword on GitHub.
-    
+
     See PARAMETERs.md for a description of the parameters of this function
     """
     safe_keyword = keyword.replace(" ", "_")
-    full_repo_save_path = (
-        f"{save_directory}/top_repo_info_{safe_keyword}_{start_page}_{stop_page}.json"
-    )
+    full_repo_save_path = f"{save_directory}/top_repo_info_{safe_keyword}_{start_page}_{stop_page}.json"
     user_save_path = f"{save_directory}/top_contributor_info_{safe_keyword}_{start_page}_{stop_page}.csv"
     if not Path(full_repo_save_path).exists():
         get_top_repos(
@@ -227,18 +239,20 @@ def get_top_contributors(
             max_n_top_contributors=max_n_top_contributors,
             start_page=start_page,
             stop_page=stop_page,
-            save_directory=save_directory
+            save_directory=save_directory,
         )
     with open(full_repo_save_path, "r") as infile:
         repo_info = json.load(infile)
         repo_info = DataProcessor(repo_info).process()
-        urls = repo_info['url']
+        urls = repo_info["url"]
         top_users = UserProfileGetter(urls).get_all_user_profiles()
         if get_user_info_only:
             top_users.to_csv(user_save_path)
             return top_users
         else:
             repo_and_top_users = pd.concat([repo_info, top_users], axis=1)
-            repo_and_top_users = repo_and_top_users.loc[:,~repo_and_top_users.columns.duplicated()]
+            repo_and_top_users = repo_and_top_users.loc[
+                :, ~repo_and_top_users.columns.duplicated()
+            ]
             repo_and_top_users.to_csv(user_save_path)
             return repo_and_top_users
