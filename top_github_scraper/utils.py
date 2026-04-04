@@ -1,5 +1,4 @@
 import logging
-import warnings
 from dataclasses import dataclass
 from typing import List
 
@@ -12,8 +11,6 @@ from rich.progress import track
 from tqdm import tqdm
 
 from top_github_scraper.auth import get_auth
-
-warnings.filterwarnings("ignore")
 
 SKIP_PATHS = {
     "/search",
@@ -63,7 +60,7 @@ class ScrapeGithubUrl:
     -------
     keyword: str
         keyword to search on Github
-    type: str
+    search_type: str
         whether to search for User or Repositories
     sort_by: str
         sort by best match or most stars, by default 'best_match', which will sort by best match.
@@ -81,13 +78,13 @@ class ScrapeGithubUrl:
     def __init__(
         self,
         keyword: str,
-        type: str,
+        search_type: str,
         sort_by: str,
         start_page_num: int,
         stop_page_num: int,
     ):
         self.keyword = keyword
-        self.type = type
+        self.type = search_type
         self.start_page_num = start_page_num
         self.stop_page_num = stop_page_num
         if sort_by == "best_match":
@@ -96,20 +93,22 @@ class ScrapeGithubUrl:
             self.sort_by = sort_by
 
     @staticmethod
-    def _keyword_to_url(page_num: int, keyword: str, type: str, sort_by: str):
+    def _keyword_to_url(
+        page_num: int, keyword: str, search_type: str, sort_by: str
+    ):
         """Change keyword to a url"""
         keyword_no_space = ("+").join(keyword.split(" "))
-        return f"https://github.com/search?o=desc&p={str(page_num)}&q={keyword_no_space}&s={sort_by}&type={type}"
+        return f"https://github.com/search?o=desc&p={str(page_num)}&q={keyword_no_space}&s={sort_by}&type={search_type}"
 
     def _scrape_top_repo_url_one_page(self, page_num: int):
         """Scrape urls of top Github repositories in 1 page"""
         url = self._keyword_to_url(
-            page_num, self.keyword, type=self.type, sort_by=self.sort_by
+            page_num, self.keyword, search_type=self.type, sort_by=self.sort_by
         )
         page = requests.get(url, auth=get_auth())
         if page.status_code != 200:
             print(
-                f"Bad HTTP Response from: {url}. Got an HTTP repsonse of: {page.status_code}.\n Please confirm this URL is valid."
+                f"Bad HTTP Response from: {url}. Got an HTTP response of: {page.status_code}.\n Please confirm this URL is valid."
             )
 
         soup = BeautifulSoup(page.text, "html.parser")
@@ -145,7 +144,7 @@ class ScrapeGithubUrl:
 class UserProfileGetter:
     """Get the information from users' homepage"""
 
-    def __init__(self, urls: List[str]) -> pd.DataFrame:
+    def __init__(self, urls: List[str]) -> None:
         self.urls = urls
         # Comment out the features that you dont want to show up in the final report.
         self.profile_features = [
